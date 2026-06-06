@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมคำนวณรายจ่าย โครงการไทยช่วยไทยพลัส</title>
+    <!-- โหลด Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- โหลด Font Noto Sans Thai -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Noto Sans Thai', sans-serif; 
+            background-color: #fdf6f6; /* โทนสีพาสเทล */
+        }
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.88); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        /* ซ่อนปุ่มลูกศรในช่องใส่ตัวเลข */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .input-box { transition: all 0.2s ease-in-out; }
+        .input-box:focus-within { transform: scale(1.01); }
+        
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="glass-card w-full max-w-sm rounded-3xl shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 p-6 text-center text-slate-700 relative">
+            <h1 class="text-xl font-bold tracking-wide">โครงการ ไทยช่วยไทย พลัส</h1>
+            <p class="text-sm font-medium opacity-80 mt-1">โปรแกรมช่วยคำนวณรายจ่าย</p>
+        </div>
+
+        <div class="p-6 space-y-4">
+            
+            <div class="bg-purple-50 text-purple-600 text-[11px] sm:text-xs text-center py-2.5 px-2 rounded-xl font-medium border border-purple-100 leading-relaxed shadow-sm">
+                💡 พิมพ์ราคาสินค้าได้เลย<br>
+                <span class="text-slate-500">หากสิทธิ์รัฐเหลือไม่ถึงที่คำนวณ <span class="font-bold text-emerald-600 underline decoration-emerald-300">สามารถแก้ตัวเลขที่ช่องรัฐช่วยจ่ายได้</span></span>
+            </div>
+
+            <!-- ราคาสินค้า (100%) -->
+            <div class="input-box">
+                <label class="text-sm font-semibold text-slate-600 flex items-center gap-2 mb-1">
+                    🏷️ ราคาสินค้า (100%)
+                </label>
+                <div class="relative">
+                    <input type="number" id="totalPrice" oninput="calculate('total')" 
+                           class="w-full bg-blue-50/50 border-2 border-blue-100 rounded-2xl px-4 py-3 text-xl font-bold text-blue-800 outline-none focus:border-blue-300 focus:bg-white transition-colors" placeholder="0">
+                    <span class="absolute right-4 top-3 text-blue-400 font-medium">บาท</span>
+                </div>
+            </div>
+
+            <hr class="border-slate-100 my-1">
+
+            <!-- รัฐช่วยจ่าย (60%) -->
+            <div class="input-box relative">
+                <label class="text-sm font-semibold text-emerald-600 flex items-center mb-1">
+                    🏛️ รัฐช่วยจ่าย (60%)
+                    <span class="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full ml-auto cursor-pointer hover:bg-emerald-200 transition-colors" onclick="document.getElementById('govPays').focus()">✎ แก้ไขได้</span>
+                </label>
+                <div class="relative">
+                    <input type="number" id="govPays" oninput="calculate('gov')"
+                           class="w-full bg-emerald-50/50 border-2 border-emerald-100 rounded-2xl px-4 py-3 text-xl font-bold text-emerald-700 outline-none focus:border-emerald-300 focus:bg-white focus:ring-4 focus:ring-emerald-50 transition-all" placeholder="0">
+                    <span class="absolute right-4 top-3 text-emerald-400 font-medium">บาท</span>
+                </div>
+            </div>
+
+            <!-- ประชาชนจ่ายเอง (40%) -->
+            <div class="input-box">
+                <label class="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
+                    📱 ประชาชนจ่ายผ่านแอป (40%)
+                </label>
+                <div class="relative">
+                    <input type="number" id="citPays" oninput="calculate('cit')"
+                           class="w-full bg-orange-50/50 border-2 border-orange-100 rounded-2xl px-4 py-3 text-xl font-bold text-orange-600 outline-none focus:border-orange-300 focus:bg-white transition-colors" placeholder="0">
+                    <span class="absolute right-4 top-3 text-orange-400 font-medium">บาท</span>
+                </div>
+            </div>
+
+            <!-- จ่ายเงินสดเพิ่ม (ส่วนเกิน) -->
+            <div class="input-box">
+                <label class="text-sm font-semibold text-rose-500 flex items-center gap-2 mb-1">
+                    💵 จ่ายเงินสดเพิ่ม (ส่วนเกินสิทธิ์)
+                </label>
+                <div class="relative">
+                    <input type="number" id="extraCash" readonly 
+                           class="w-full bg-rose-50/40 border-2 border-rose-100 rounded-2xl px-4 py-3 text-xl font-bold text-rose-600 outline-none cursor-not-allowed" placeholder="0">
+                    <span class="absolute right-4 top-3 text-rose-400 font-medium">บาท</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="h-2.5 w-full bg-slate-100 rounded-full flex overflow-hidden mt-1">
+                <div id="barGov" class="h-full bg-emerald-300 transition-all duration-300" style="width: 0%"></div>
+                <div id="barCit" class="h-full bg-orange-300 transition-all duration-300" style="width: 0%"></div>
+                <div id="barExtra" class="h-full bg-rose-300 transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <!-- ปุ่มล้างค่า -->
+            <button onclick="resetAll()" class="w-full py-3 bg-white border-2 border-slate-100 hover:bg-slate-50 text-slate-500 rounded-2xl font-bold transition-colors flex justify-center items-center gap-2 shadow-sm text-sm">
+                ล้างค่าทั้งหมด
+            </button>
+
+            <!-- เงื่อนไขโครงการ -->
+            <details class="group bg-slate-50/50 border border-slate-200/60 rounded-2xl mt-4 transition-all duration-300">
+                <summary class="flex justify-between items-center font-semibold cursor-pointer p-3.5 text-slate-600 text-sm hover:bg-slate-100/50 rounded-2xl transition-colors">
+                    <span class="flex items-center gap-2">📋 เงื่อนไขโครงการ</span>
+                    <span class="transition-transform duration-300 group-open:rotate-180 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </span>
+                </summary>
+                <div class="text-slate-500 px-4 pb-4">
+                    <ul class="list-disc pl-5 space-y-1.5 text-xs font-medium leading-relaxed">
+                        <li>จำกัดวงเงินรัฐช่วยจ่ายสูงสุดไม่เกิน <span class="text-emerald-600 font-bold">200 บาท/วัน</span></li>
+                        <li>ได้วงเงิน 1,000 บาท ต่อคนต่อเดือน (รวม 4,000 บาท ตลอดโครงการ)</li>
+                        <li>ตัดยอดทุกสิ้นเดือน (ใช้ไม่หมดไม่ทบไปเดือนถัดไป)</li>
+                        <li>เวลาที่ใช้สิทธิได้ 06.00 – 23.00 น.</li>
+                        <li>ระยะเวลาโครงการ 1 มิ.ย. – 30 ก.ย. 69</li>
+                    </ul>
+                </div>
+            </details>
+
+            <!-- เครดิต -->
+            <div class="text-center text-[11px] text-slate-400 font-medium pt-3 border-t border-slate-100/80 tracking-wider mt-4">
+                💡 พัฒนาโดย Dev: Interface21
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const maxGov = 200; // เพดานสูงสุดต่อวัน
+
+        function calculate(source) {
+            let totalInput = document.getElementById('totalPrice');
+            let govInput = document.getElementById('govPays');
+            let citInput = document.getElementById('citPays');
+            let extraInput = document.getElementById('extraCash');
+
+            let total = parseFloat(totalInput.value) || 0;
+            let gov = parseFloat(govInput.value) || 0;
+            let cit = parseFloat(citInput.value) || 0;
+            let extra = 0;
+
+            if (source === 'total') {
+                if (total === 0) { resetOutputs(); return; }
+                
+                // คำนวณปกติ ถ้าราคาของเกินลิมิต รัฐจ่ายสูงสุดที่ 200
+                gov = Math.min(total * 0.6, maxGov);
+                // ประชาชนจ่าย 40% ในสัดส่วน 60:40 ของยอดที่รัฐจ่าย
+                cit = gov * (40/60); 
+                // ส่วนที่เหลือปัดเป็นเงินสดทั้งหมด
+                extra = total - gov - cit; 
+                if (extra < 0) extra = 0;
+
+            } else if (source === 'gov') {
+                if (gov === 0 && total === 0) { resetOutputs(); return; }
+                if (gov > maxGov) { gov = maxGov; govInput.value = maxGov; }
+
+                if (total > 0 && total >= (gov / 0.6)) {
+                    cit = gov * (40/60);
+                    extra = total - gov - cit;
+                } else {
+                    total = gov / 0.6;
+                    cit = total * 0.4;
+                    extra = 0;
+                }
+
+            } else if (source === 'cit') {
+                let maxCit = maxGov * (40/60);
+                if (cit === 0 && total === 0) { resetOutputs(); return; }
+                if (cit > maxCit) { cit = maxCit; citInput.value = formatNumber(maxCit); }
+
+                if (total > 0 && total >= (cit / 0.4)) {
+                    gov = cit * (60/40);
+                    extra = total - gov - cit;
+                } else {
+                    total = cit / 0.4;
+                    gov = total * 0.6;
+                    extra = 0;
+                }
+            }
+
+            // แสดงผลลัพธ์ลงในช่องที่ไม่ได้กำลังพิมพ์อยู่
+            if (source !== 'total') totalInput.value = formatNumber(total);
+            if (source !== 'gov') govInput.value = formatNumber(gov);
+            if (source !== 'cit') citInput.value = formatNumber(cit);
+            extraInput.value = formatNumber(extra);
+
+            updateBars(total, gov, cit, extra);
+        }
+
+        function updateBars(total, gov, cit, extra) {
+            if (total === 0) {
+                document.getElementById('barGov').style.width = '0%';
+                document.getElementById('barCit').style.width = '0%';
+                document.getElementById('barExtra').style.width = '0%';
+                return;
+            }
+            document.getElementById('barGov').style.width = (gov / total * 100) + '%';
+            document.getElementById('barCit').style.width = (cit / total * 100) + '%';
+            document.getElementById('barExtra').style.width = (extra / total * 100) + '%';
+        }
+
+        function formatNumber(num) {
+            if (num === 0) return '';
+            return Number.isInteger(num) ? num : parseFloat(num.toFixed(2));
+        }
+
+        function resetOutputs() {
+            document.getElementById('govPays').value = '';
+            document.getElementById('citPays').value = '';
+            document.getElementById('extraCash').value = '';
+            updateBars(0, 0, 0, 0);
+        }
+
+        function resetAll() {
+            document.getElementById('totalPrice').value = '';
+            resetOutputs();
+        }
+    </script>
+</body>
+</html>
