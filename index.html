@@ -2,10 +2,10 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>โปรแกรมคำนวณรายจ่าย โครงการไทยช่วยไทยพลัส</title>
 
-    <!-- Google tag (gtag.js) สำหรับเก็บสถิติผู้เข้าชม -->
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7GRE4XR48C"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -15,7 +15,6 @@
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ไลบรารีสำหรับสร้าง QR Code อัตโนมัติ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -23,31 +22,26 @@
         body { 
             font-family: 'Noto Sans Thai', sans-serif; 
             background-color: #DBD8C9; /* สีพื้นหลังที่คุณชอบ */
+            /* ป้องกันการเด้งของจอ (Bounce effect) บน iOS */
+            overscroll-behavior-y: none;
         }
         .glass-card { 
             background: rgba(255, 255, 255, 0.94); 
             backdrop-filter: blur(12px); 
             border: 1px solid rgba(255, 255, 255, 0.6);
         }
-        /* ซ่อนปุ่มลูกศรในช่องตัวเลข */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        /* แอนิเมชันปุ่มเวลาโดนกด */
+        .btn-press:active {
+            transform: scale(0.95);
         }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
-        .input-box { transition: all 0.2s ease-in-out; }
-        .input-box:focus-within { transform: scale(1.01); }
-        
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
-
-        /* จัดตำแหน่งรูปภาพ QR Code ให้อยู่ตรงกลางเสมอ */
-        #qrcode img {
-            margin: auto;
-            border-radius: 12px;
+        #qrcode img { margin: auto; border-radius: 12px; }
+        
+        /* ช่องกรอกข้อมูลที่ใช้ Numpad จะมีเคอร์เซอร์แบบชี้ */
+        .numpad-input {
+            cursor: pointer;
+            caret-color: transparent; /* ซ่อนเคอร์เซอร์กะพริบ */
         }
     </style>
 </head>
@@ -56,87 +50,81 @@
     <!-- การ์ดแอปพลิเคชันหลัก -->
     <div class="glass-card w-full max-w-sm rounded-3xl shadow-xl overflow-hidden mb-4 transition-all duration-300">
         
-        <!-- ส่วนหัว (Header) -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-center text-white relative shadow-md">
             <h1 class="text-xl font-bold tracking-wide">โครงการ ไทยช่วยไทย พลัส</h1>
             <p class="text-sm font-medium opacity-90 mt-1">โปรแกรมช่วยคำนวณรายจ่าย</p>
         </div>
 
         <div class="p-6 space-y-4">
-            
-            <!-- กล่องแนะนำการแก้ไข -->
             <div class="bg-blue-50 text-blue-700 text-[11px] sm:text-xs text-center py-2.5 px-2 rounded-xl font-medium border border-blue-100 leading-relaxed shadow-sm">
-                💡 พิมพ์ราคาสินค้าได้เลย<br>
+                💡 กดที่ช่องเพื่อพิมพ์ราคาสินค้าได้เลย<br>
                 <span class="text-slate-600">หากสิทธิ์รัฐเหลือไม่ถึงที่คำนวณ <span class="font-bold text-emerald-600 underline decoration-emerald-300">สามารถแก้ตัวเลขที่ช่องรัฐช่วยจ่ายได้</span></span>
             </div>
 
-            <!-- ช่องราคาสินค้า -->
-            <div class="input-box">
+            <!-- ช่องราคาสินค้า (เปลี่ยนเป็น readonly และเรียก Numpad) -->
+            <div>
                 <label class="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-1">
                     🏷️ ราคาสินค้า (100%)
                 </label>
                 <div class="relative">
-                    <input type="number" id="totalPrice" oninput="calculate('total')" 
-                           class="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-xl font-bold text-slate-800 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-colors shadow-sm" placeholder="0">
-                    <span class="absolute right-4 top-3 text-slate-400 font-medium">บาท</span>
+                    <input type="text" id="totalPrice" readonly onclick="openNumpad('totalPrice', 'total', '🏷️ ระบุราคาสินค้า')"
+                           class="numpad-input w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-xl font-bold text-slate-800 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-colors shadow-sm" placeholder="0">
+                    <span class="absolute right-4 top-3 text-slate-400 font-medium pointer-events-none">บาท</span>
                 </div>
             </div>
 
             <hr class="border-slate-200 my-2">
 
-            <!-- ช่องรัฐช่วยจ่าย|สิทธิ์คงเหลือ (60%) [ปรับปรุงชื่อใหม่ตามคำแนะนำ] -->
-            <div class="input-box relative">
+            <!-- ช่องรัฐช่วยจ่าย -->
+            <div>
                 <label class="text-sm font-semibold text-emerald-600 flex items-center mb-1">
                     🏛️ รัฐช่วยจ่าย|สิทธิ์คงเหลือ (60%)
-                    <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full ml-auto cursor-pointer hover:bg-emerald-200 transition-colors shadow-sm" onclick="document.getElementById('govPays').focus()">✎ แก้ไขได้</span>
+                    <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full ml-auto cursor-pointer hover:bg-emerald-200 transition-colors shadow-sm" onclick="openNumpad('govPays', 'gov', '🏛️ สิทธิ์คงเหลือ(รัฐช่วยจ่าย)')">✎ แก้ไขได้</span>
                 </label>
                 <div class="relative">
-                    <input type="number" id="govPays" oninput="calculate('gov')"
-                           class="w-full bg-emerald-50/50 border-2 border-emerald-200 rounded-2xl px-4 py-3 text-xl font-bold text-emerald-700 outline-none focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50 transition-all shadow-sm" placeholder="0">
-                    <span class="absolute right-4 top-3 text-emerald-500 font-medium">บาท</span>
+                    <input type="text" id="govPays" readonly onclick="openNumpad('govPays', 'gov', '🏛️ สิทธิ์คงเหลือ(รัฐช่วยจ่าย)')"
+                           class="numpad-input w-full bg-emerald-50/50 border-2 border-emerald-200 rounded-2xl px-4 py-3 text-xl font-bold text-emerald-700 outline-none focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50 transition-all shadow-sm" placeholder="0">
+                    <span class="absolute right-4 top-3 text-emerald-500 font-medium pointer-events-none">บาท</span>
                 </div>
             </div>
 
-            <!-- ช่องประชาชนจ่ายผ่านแอป -->
-            <div class="input-box">
+            <!-- ช่องประชาชนจ่าย -->
+            <div>
                 <label class="text-sm font-semibold text-orange-600 flex items-center gap-2 mb-1">
                     📱 ประชาชนจ่ายผ่านแอป (40%)
                 </label>
                 <div class="relative">
-                    <input type="number" id="citPays" oninput="calculate('cit')"
-                           class="w-full bg-orange-50/50 border-2 border-orange-200 rounded-2xl px-4 py-3 text-xl font-bold text-orange-600 outline-none focus:border-orange-400 focus:bg-white transition-colors shadow-sm" placeholder="0">
-                    <span class="absolute right-4 top-3 text-orange-400 font-medium">บาท</span>
+                    <input type="text" id="citPays" readonly onclick="openNumpad('citPays', 'cit', '📱 ระบุส่วนที่ประชาชนจ่าย')"
+                           class="numpad-input w-full bg-orange-50/50 border-2 border-orange-200 rounded-2xl px-4 py-3 text-xl font-bold text-orange-600 outline-none focus:border-orange-400 focus:bg-white transition-colors shadow-sm" placeholder="0">
+                    <span class="absolute right-4 top-3 text-orange-400 font-medium pointer-events-none">บาท</span>
                 </div>
             </div>
 
             <!-- ช่องจ่ายเงินสดเพิ่ม -->
-            <div class="input-box">
+            <div>
                 <label class="text-sm font-semibold text-rose-600 flex items-center gap-2 mb-1">
                     💵 จ่ายเงินสดเพิ่ม (ส่วนเกินสิทธิ์)
                 </label>
                 <div class="relative">
-                    <input type="number" id="extraCash" readonly 
+                    <input type="text" id="extraCash" readonly 
                            class="w-full bg-rose-50/50 border-2 border-rose-200 rounded-2xl px-4 py-3 text-xl font-bold text-rose-600 outline-none cursor-not-allowed shadow-inner" placeholder="0">
-                    <span class="absolute right-4 top-3 text-rose-400 font-medium">บาท</span>
+                    <span class="absolute right-4 top-3 text-rose-400 font-medium pointer-events-none">บาท</span>
                 </div>
             </div>
 
-            <!-- แถบสัดส่วน (Progress Bar) -->
+            <!-- Progress Bar -->
             <div class="h-2.5 w-full bg-slate-200 rounded-full flex overflow-hidden mt-1 shadow-inner">
                 <div id="barGov" class="h-full bg-emerald-400 transition-all duration-300" style="width: 0%"></div>
                 <div id="barCit" class="h-full bg-orange-400 transition-all duration-300" style="width: 0%"></div>
                 <div id="barExtra" class="h-full bg-rose-400 transition-all duration-300" style="width: 0%"></div>
             </div>
 
-            <!-- ชุดปุ่มสั่งการหลัก -->
             <div class="space-y-2 pt-2">
-                <!-- ปุ่มล้างค่าทั้งหมด -->
-                <button onclick="resetAll()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 border border-slate-200/60 rounded-xl font-semibold transition-all flex justify-center items-center gap-1.5 text-xs shadow-sm">
+                <button onclick="resetAll()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 border border-slate-200/60 rounded-xl font-semibold transition-all flex justify-center items-center gap-1.5 text-xs shadow-sm btn-press">
                     ล้างค่าทั้งหมด
                 </button>
 
-                <!-- ปุ่มแชร์แอปพลิเคชัน (อัปเดตไอคอนแชร์ใหม่ให้ชัดเจนยิ่งขึ้น) -->
-                <button onclick="openShareModal()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all flex justify-center items-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98] text-sm">
+                <button onclick="openShareModal()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all flex justify-center items-center gap-2 shadow-md hover:shadow-lg btn-press text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98m-.01-10.98l-6.82 3.98" />
                     </svg>
@@ -144,14 +132,11 @@
                 </button>
             </div>
 
-            <!-- เงื่อนไขโครงการ -->
             <details class="group bg-slate-50 border border-slate-200 rounded-2xl mt-2 transition-all duration-300 shadow-sm">
                 <summary class="flex justify-between items-center font-semibold cursor-pointer p-3.5 text-slate-700 text-xs hover:bg-slate-100 rounded-2xl transition-colors">
                     <span class="flex items-center gap-2">📋 เงื่อนไขโครงการ</span>
                     <span class="transition-transform duration-300 group-open:rotate-180 text-slate-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </span>
                 </summary>
                 <div class="text-slate-600 px-4 pb-4">
@@ -164,113 +149,148 @@
                 </div>
             </details>
 
-            <!-- เครดิตนักพัฒนา -->
             <div class="text-center text-[10px] text-slate-400 font-medium pt-3 border-t border-slate-200 tracking-wider">
                 💡 พัฒนาโดย Dev: Interface21
             </div>
         </div>
     </div>
 
-    <!-- โค้ดตัวนับจำนวนผู้เข้าชมใต้แอปพลิเคชัน -->
+    <!-- ตัวนับจำนวน -->
     <div class="opacity-60 hover:opacity-100 transition-opacity flex justify-center items-center py-2 mb-4">
         <a href="https://www.freecounterstat.com" title="free counter">
             <img src="https://counter9.optistats.ovh/private/freecounterstat.php?c=szwzng4cptx6c2r4kcy2ywwa5a41n63a" border="0" title="free counter" alt="free counter">
         </a>
     </div>
 
-    <!-- 🌟 MODAL แผงควบคุมการแชร์แอป พร้อมเครื่องเจเนอเรต QR Code ในตัว -->
+    <!-- 🌟 MODAL: แป้นพิมพ์ตัวเลข (Custom Numpad) -->
+    <div id="numpadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-end justify-center hidden opacity-0 transition-all duration-300">
+        <div id="numpadContent" class="bg-slate-100 rounded-t-3xl w-full max-w-sm shadow-[0_-10px_40px_rgba(0,0,0,0.2)] transform translate-y-full transition-all duration-300 overflow-hidden">
+            
+            <!-- ส่วนหัวของ Numpad -->
+            <div class="bg-white px-5 py-4 border-b border-slate-200 flex justify-between items-center">
+                <h3 id="numpadTitle" class="font-bold text-slate-800 text-sm">ระบุตัวเลข</h3>
+                <button onclick="closeNumpad()" class="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-full btn-press">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <!-- หน้าจอแสดงผลตัวเลข -->
+            <div class="px-5 pt-5 pb-2">
+                <div class="bg-white border-2 border-indigo-200 rounded-2xl p-4 text-right shadow-inner flex items-center justify-between">
+                    <span class="text-slate-400 font-medium">฿</span>
+                    <span id="numpadDisplay" class="text-4xl font-bold text-indigo-600 tracking-tight overflow-hidden">0</span>
+                </div>
+            </div>
+
+            <!-- ปุ่มกดตัวเลข 3x4 Grid -->
+            <div class="p-5 grid grid-cols-3 gap-3">
+                <button onclick="numpadPress('1')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">1</button>
+                <button onclick="numpadPress('2')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">2</button>
+                <button onclick="numpadPress('3')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">3</button>
+                
+                <button onclick="numpadPress('4')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">4</button>
+                <button onclick="numpadPress('5')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">5</button>
+                <button onclick="numpadPress('6')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">6</button>
+                
+                <button onclick="numpadPress('7')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">7</button>
+                <button onclick="numpadPress('8')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">8</button>
+                <button onclick="numpadPress('9')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">9</button>
+                
+                <!-- แถวสุดท้าย -->
+                <button onclick="numpadClear()" class="btn-press py-4 bg-rose-50 rounded-2xl text-xl font-bold text-rose-500 shadow-sm border border-rose-100">C</button>
+                <button onclick="numpadPress('0')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">0</button>
+                <button onclick="numpadDelete()" class="btn-press py-4 bg-slate-200 rounded-2xl text-xl font-bold text-slate-600 shadow-sm border border-slate-300/50 flex justify-center items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6.707 4.879A3 3 0 018.828 4H15a3 3 0 013 3v6a3 3 0 01-3 3H8.828a3 3 0 01-2.12-.879l-4.415-4.414a1 1 0 010-1.414l4.414-4.414zm4 2.414a1 1 0 00-1.414 1.414L10.586 10l-1.293 1.293a1 1 0 101.414 1.414L12 11.414l1.293 1.293a1 1 0 001.414-1.414L13.414 10l1.293-1.293a1 1 0 00-1.414-1.414L12 8.586l-1.293-1.293z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- ปุ่มยืนยัน -->
+            <div class="px-5 pb-8">
+                <button onclick="numpadConfirm()" class="btn-press w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg shadow-lg">
+                    ตกลง (Enter)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌟 MODAL แชร์แอป -->
     <div id="shareModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-all duration-300">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative border border-slate-100 transform scale-95 transition-all duration-300 max-h-[92vh] overflow-y-auto" id="modalContent">
-            
-            <!-- ปุ่มปิดมุมขวาบน -->
-            <button onclick="closeShareModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-50 rounded-full transition-colors z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+            <button onclick="closeShareModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-50 rounded-full transition-colors z-10 btn-press">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-
-            <!-- รายละเอียดแชร์ -->
             <div class="text-center pt-2">
-                <!-- อัปเดตไอคอนในหน้าต่างแชร์ให้เป็นรูปแบบเครือข่ายสากลเข้าคู่กัน -->
                 <div class="inline-flex items-center justify-center bg-indigo-50 text-indigo-600 p-2.5 rounded-full mb-2 shadow-inner">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98m-.01-10.98l-6.82 3.98" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98m-.01-10.98l-6.82 3.98" /></svg>
                 </div>
                 <h3 class="text-base font-bold text-slate-800">แชร์แอปหรือสแกนใช้งาน</h3>
                 <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">เลือกสแกน QR Code เพื่อเปิดใช้งานบนมือถือ หรือแชร์ลิงก์ต่อได้เลยครับ</p>
-                
-                <!-- 🖼️ พื้นที่แสดง QR Code เพื่อสแกนใช้งานได้ทันที -->
                 <div class="bg-slate-50/80 p-4 rounded-2xl flex flex-col justify-center items-center my-4 border border-slate-100 shadow-inner">
                     <div id="qrcode" class="p-1.5 bg-white rounded-xl shadow-sm border border-slate-100"></div>
-                    <p class="text-[10.5px] text-slate-500 mt-2 font-medium flex items-center gap-1">
-                        <span>📷</span> เปิดกล้องสแกนเพื่อเข้าใช้บนมือถือ
-                    </p>
+                    <p class="text-[10.5px] text-slate-500 mt-2 font-medium flex items-center gap-1"><span>📷</span> เปิดกล้องสแกนเพื่อเข้าใช้บนมือถือ</p>
                 </div>
-
-                <!-- ปุ่มแชร์โซเชียลมีเดีย -->
                 <div class="grid grid-cols-2 gap-3 mb-4">
-                    <!-- แชร์ LINE -->
-                    <a href="https://social-plugins.line.me/lineit/share?url=https%3A%2F%2Finterface21.github.io%2Fthai-chuy-thai-calc%2F" target="_blank" class="flex flex-col items-center justify-center p-3 border border-slate-100 bg-[#06C755]/10 hover:bg-[#06C755]/15 text-[#06c755] rounded-2xl font-bold text-xs transition-colors shadow-sm">
-                        <svg class="h-6 w-6 mb-1" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M21.9 10.7c0-4.3-4.4-7.8-9.9-7.8s-9.9 3.5-9.9 7.8c0 3.9 3.5 7.1 8.3 7.7.3.1.7.3.8.6l.3 1.5c.1.4-.1.8-.4.9-.1 0-.2.1-.3 0l-3.7-2.4c-.2-.1-.4-.1-.6 0-1.5.7-3.1 1.1-4.7 1.1h-.1c-.8 0-1.5-.6-1.6-1.5V10.7C1.4 6.4 5.9 2.9 11.4 2.9s9.9 3.5 9.9 7.8c0 3.8-3.5 7.1-8.3 7.7l-.3-.1c1.7-1.2 3.2-2.9 4-4.9 2.1-.6 3.4-2.6 3.4-4.8l.1-.1zm-13.8-.9h-1.6c-.3 0-.5.2-.5.5v2.8c0 .3.2.5.5.5h1.6c.3 0 .5-.2.5-.5V10.3c0-.3-.2-.5-.5-.5zm5-.5c0-.3-.2-.5-.5-.5h-2.1c-.3 0-.5.2-.5.5v3.8c0 .3.2.5.5.5h2.1c.3 0 .5-.2.5-.5v-1.1c0-.3-.2-.5-.5-.5h-1.6V11H13c.3 0 .5-.2.5-.5l.1-1.2zm2.9.5H15c-.3 0-.5.2-.5.5v3.8c0 .3.2.5.5.5h1c.3 0 .5-.2.5-.5v-2.1l1.5 2.1c.1.2.3.3.5.3h.8c.2 0 .4-.1.5-.3.1-.2.1-.5-.1-.7l-1.3-1.8 1.2-1.6c.1-.2.2-.4.1-.7 0-.3-.2-.5-.5-.5h-1l-1.2 1.6v-1.6z"/>
-                        </svg>
+                    <a href="https://social-plugins.line.me/lineit/share?url=https%3A%2F%2Finterface21.github.io%2Fthai-chuy-thai-calc%2F" target="_blank" class="btn-press flex flex-col items-center justify-center p-3 border border-slate-100 bg-[#06C755]/10 hover:bg-[#06C755]/15 text-[#06c755] rounded-2xl font-bold text-xs transition-colors shadow-sm">
+                        <svg class="h-6 w-6 mb-1" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 10.7c0-4.3-4.4-7.8-9.9-7.8s-9.9 3.5-9.9 7.8c0 3.9 3.5 7.1 8.3 7.7.3.1.7.3.8.6l.3 1.5c.1.4-.1.8-.4.9-.1 0-.2.1-.3 0l-3.7-2.4c-.2-.1-.4-.1-.6 0-1.5.7-3.1 1.1-4.7 1.1h-.1c-.8 0-1.5-.6-1.6-1.5V10.7C1.4 6.4 5.9 2.9 11.4 2.9s9.9 3.5 9.9 7.8c0 3.8-3.5 7.1-8.3 7.7l-.3-.1c1.7-1.2 3.2-2.9 4-4.9 2.1-.6 3.4-2.6 3.4-4.8l.1-.1zm-13.8-.9h-1.6c-.3 0-.5.2-.5.5v2.8c0 .3.2.5.5.5h1.6c.3 0 .5-.2.5-.5V10.3c0-.3-.2-.5-.5-.5zm5-.5c0-.3-.2-.5-.5-.5h-2.1c-.3 0-.5.2-.5.5v3.8c0 .3.2.5.5.5h2.1c.3 0 .5-.2.5-.5v-1.1c0-.3-.2-.5-.5-.5h-1.6V11H13c.3 0 .5-.2.5-.5l.1-1.2zm2.9.5H15c-.3 0-.5.2-.5.5v3.8c0 .3.2.5.5.5h1c.3 0 .5-.2.5-.5v-2.1l1.5 2.1c.1.2.3.3.5.3h.8c.2 0 .4-.1.5-.3.1-.2.1-.5-.1-.7l-1.3-1.8 1.2-1.6c.1-.2.2-.4.1-.7 0-.3-.2-.5-.5-.5h-1l-1.2 1.6v-1.6z"/></svg>
                         ส่งต่อใน LINE
                     </a>
-
-                    <!-- แชร์ Facebook -->
-                    <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Finterface21.github.io%2Fthai-chuy-thai-calc%2F" target="_blank" class="flex flex-col items-center justify-center p-3 border border-slate-100 bg-[#1877F2]/10 hover:bg-[#1877F2]/15 text-[#1877f2] rounded-2xl font-bold text-xs transition-colors shadow-sm">
-                        <svg class="h-6 w-6 mb-1" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/>
-                        </svg>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Finterface21.github.io%2Fthai-chuy-thai-calc%2F" target="_blank" class="btn-press flex flex-col items-center justify-center p-3 border border-slate-100 bg-[#1877F2]/10 hover:bg-[#1877F2]/15 text-[#1877f2] rounded-2xl font-bold text-xs transition-colors shadow-sm">
+                        <svg class="h-6 w-6 mb-1" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/></svg>
                         ลง Facebook
                     </a>
                 </div>
-
-                <!-- กล่องคัดลอกลิงก์ตรง -->
                 <div class="text-left mb-4">
                     <label class="text-[10px] font-bold text-slate-500 block mb-1 ml-1">📋 ลิงก์สำหรับส่งให้เพื่อน</label>
                     <div class="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-2xl border border-slate-200">
                         <input type="text" readonly id="shareUrlValue" value="https://interface21.github.io/thai-chuy-thai-calc/" class="bg-transparent text-xs text-slate-600 font-semibold outline-none flex-1 px-2 select-all overflow-ellipsis">
-                        <button onclick="copyShareLink()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition-colors flex items-center gap-1 shadow-sm shrink-0">
+                        <button onclick="copyShareLink()" class="btn-press px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition-colors flex items-center gap-1 shadow-sm shrink-0">
                             คัดลอก
                         </button>
                     </div>
                 </div>
-
-                <!-- ปุ่มปิดการทำงาน -->
-                <button onclick="closeShareModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs transition-colors">
+                <button onclick="closeShareModal()" class="btn-press w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs transition-colors">
                     ปิดหน้าต่างนี้
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ระบบแจ้งเตือน (Toast Notification) -->
+    <!-- Toast Notification -->
     <div id="toastMessage" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none text-xs font-medium w-[90%] max-w-[300px] text-center z-50 flex items-center justify-center gap-2">
         <span id="toastIcon"></span>
         <span id="toastText">ข้อความแจ้งเตือน</span>
     </div>
 
-    <!-- Script ควบคุมการคำนวณและระบบแชร์ -->
     <script>
-        const maxGov = 200; // วงเงินรัฐช่วยจ่ายสูงสุดต่อวัน
+        const maxGov = 200;
 
-        // ฟังก์ชันคำนวณการแบ่งส่วนรายจ่าย
+        // ฟังก์ชันช่วยดึงค่าตัวเลข โดยลบลูกน้ำออกก่อน (เพราะเราจะเพิ่มลูกน้ำเข้าไปให้สวยๆ)
+        function parseCustomFloat(val) {
+            if(!val) return 0;
+            return parseFloat(val.toString().replace(/,/g, '')) || 0;
+        }
+
+        // เพิ่มฟังก์ชันฟอร์แมตตัวเลขให้มีลูกน้ำ (Comma)
+        function formatNumber(num) {
+            if (num === 0 || num === '' || isNaN(num)) return '';
+            return num.toLocaleString('th-TH', { maximumFractionDigits: 2 });
+        }
+
         function calculate(source) {
             let totalInput = document.getElementById('totalPrice');
             let govInput = document.getElementById('govPays');
             let citInput = document.getElementById('citPays');
             let extraInput = document.getElementById('extraCash');
 
-            let total = parseFloat(totalInput.value) || 0;
-            let gov = parseFloat(govInput.value) || 0;
-            let cit = parseFloat(citInput.value) || 0;
+            let total = parseCustomFloat(totalInput.value);
+            let gov = parseCustomFloat(govInput.value);
+            let cit = parseCustomFloat(citInput.value);
             let extra = 0;
 
             if (source === 'total') {
                 if (total === 0) { resetOutputs(); return; }
-                
                 gov = Math.min(total * 0.6, maxGov);
                 cit = gov * (40/60); 
                 extra = total - gov - cit; 
@@ -278,7 +298,7 @@
 
             } else if (source === 'gov') {
                 if (gov === 0 && total === 0) { resetOutputs(); return; }
-                if (gov > maxGov) { gov = maxGov; govInput.value = maxGov; }
+                if (gov > maxGov) { gov = maxGov; }
 
                 if (total > 0 && total >= (gov / 0.6)) {
                     cit = gov * (40/60);
@@ -292,7 +312,7 @@
             } else if (source === 'cit') {
                 let maxCit = maxGov * (40/60);
                 if (cit === 0 && total === 0) { resetOutputs(); return; }
-                if (cit > maxCit) { cit = maxCit; citInput.value = formatNumber(maxCit); }
+                if (cit > maxCit) { cit = maxCit; }
 
                 if (total > 0 && total >= (cit / 0.4)) {
                     gov = cit * (60/40);
@@ -312,7 +332,6 @@
             updateBars(total, gov, cit, extra);
         }
 
-        // อัปเดตสัดส่วนแถบสีความคืบหน้า
         function updateBars(total, gov, cit, extra) {
             if (total === 0) {
                 document.getElementById('barGov').style.width = '0%';
@@ -323,11 +342,6 @@
             document.getElementById('barGov').style.width = (gov / total * 100) + '%';
             document.getElementById('barCit').style.width = (cit / total * 100) + '%';
             document.getElementById('barExtra').style.width = (extra / total * 100) + '%';
-        }
-
-        function formatNumber(num) {
-            if (num === 0) return '';
-            return Number.isInteger(num) ? num : parseFloat(num.toFixed(2));
         }
 
         function resetOutputs() {
@@ -342,7 +356,100 @@
             resetOutputs();
         }
 
-        // --- ระบบควบคุมหน้าต่างแชร์แอป และ เจเนอเรต QR Code อัตโนมัติ ---
+        // ==========================================
+        // ระบบ Custom Numpad (แป้นพิมพ์ตัวเลขจำลอง)
+        // ==========================================
+        let currentInputTarget = '';
+        let currentSource = '';
+        let currentNumpadValue = '0';
+
+        function openNumpad(targetId, sourceName, titleStr) {
+            currentInputTarget = targetId;
+            currentSource = sourceName;
+            
+            // ดึงค่าปัจจุบัน ลบลูกน้ำออก
+            let el = document.getElementById(targetId);
+            let rawVal = el.value.replace(/,/g, '');
+            currentNumpadValue = rawVal || '0';
+            
+            document.getElementById('numpadTitle').innerText = titleStr;
+            updateNumpadDisplay();
+
+            const modal = document.getElementById('numpadModal');
+            const content = document.getElementById('numpadContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeNumpad() {
+            const modal = document.getElementById('numpadModal');
+            const content = document.getElementById('numpadContent');
+            content.classList.add('translate-y-full');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function numpadPress(num) {
+            if (currentNumpadValue === '0') {
+                currentNumpadValue = num;
+            } else {
+                // กันไม่ให้พิมพ์เลขยาวเกินไป (สูงสุด 6 หลัก)
+                if(currentNumpadValue.length < 6) {
+                    currentNumpadValue += num;
+                }
+            }
+            updateNumpadDisplay();
+        }
+
+        function numpadDelete() {
+            if (currentNumpadValue.length > 1) {
+                currentNumpadValue = currentNumpadValue.slice(0, -1);
+            } else {
+                currentNumpadValue = '0';
+            }
+            updateNumpadDisplay();
+        }
+
+        function numpadClear() {
+            currentNumpadValue = '0';
+            updateNumpadDisplay();
+        }
+
+        function updateNumpadDisplay() {
+            let num = parseInt(currentNumpadValue, 10);
+            document.getElementById('numpadDisplay').innerText = isNaN(num) ? '0' : num.toLocaleString('th-TH');
+        }
+
+        function numpadConfirm() {
+            let el = document.getElementById(currentInputTarget);
+            let finalNum = parseInt(currentNumpadValue, 10);
+            
+            if(isNaN(finalNum) || finalNum === 0) {
+                el.value = '';
+            } else {
+                el.value = finalNum.toLocaleString('th-TH');
+            }
+            
+            closeNumpad();
+            calculate(currentSource); // สั่งคำนวณใหม่
+        }
+
+        // ปิด Numpad เมื่อคลิกพื้นที่ว่าง
+        document.getElementById('numpadModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeNumpad();
+            }
+        });
+
+
+        // ==========================================
+        // ระบบ Share & QR Code
+        // ==========================================
         let qrGenerated = false;
 
         function openShareModal() {
@@ -356,11 +463,9 @@
                 content.classList.add('scale-100');
             }, 10);
 
-            // เจเนอเรต QR Code ทันทีที่เปิดหน้าต่างแชร์ครั้งแรก
             if (!qrGenerated) {
                 const qrContainer = document.getElementById("qrcode");
-                qrContainer.innerHTML = ""; // เคลียร์ขยะเดิม
-                
+                qrContainer.innerHTML = ""; 
                 new QRCode(qrContainer, {
                     text: "https://interface21.github.io/thai-chuy-thai-calc/",
                     width: 140,
@@ -376,53 +481,35 @@
         function closeShareModal() {
             const modal = document.getElementById('shareModal');
             const content = document.getElementById('modalContent');
-            
             modal.classList.add('opacity-0');
             content.classList.remove('scale-100');
             content.classList.add('scale-95');
-            
             setTimeout(() => {
                 modal.classList.add('hidden');
             }, 300);
         }
 
-        // ปิด Modal เมื่อคลิกนอกหน้าต่างคอนเทนต์
         document.getElementById('shareModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeShareModal();
-            }
+            if (e.target === this) closeShareModal();
         });
 
-        // --- ฟังก์ชันคัดลอกลิงก์รองรับสภาพแวดล้อม iFrame (document.execCommand) ---
         function copyShareLink() {
             const copyText = document.getElementById("shareUrlValue");
-            
-            // สร้าง element จำลองเพื่อส่งคำสั่งคัดลอกป้องกันเบราว์เซอร์บล็อกเมื่อทำงานในกรอบ iFrame
             const tempInput = document.createElement("input");
             tempInput.value = copyText.value;
             document.body.appendChild(tempInput);
-            
-            // เลือกข้อความ
             tempInput.select();
-            tempInput.setSelectionRange(0, 99999); // สำหรับรองรับมือถือ iOS และ Android
-            
+            tempInput.setSelectionRange(0, 99999); 
             try {
-                // รันคำสั่งคัดลอกด้วยวิธีดั้งเดิมที่ปลอดภัยที่สุดใน iFrame
                 const successful = document.execCommand("copy");
-                if (successful) {
-                    showToast("คัดลอกลิงก์แอปเรียบร้อยแล้วครับ! 📋", "success");
-                } else {
-                    showToast("ไม่สามารถคัดลอกได้โดยอัตโนมัติ", "error");
-                }
+                if (successful) showToast("คัดลอกลิงก์แอปเรียบร้อยแล้วครับ! 📋", "success");
+                else showToast("ไม่สามารถคัดลอกได้โดยอัตโนมัติ", "error");
             } catch (err) {
                 showToast("ไม่สามารถคัดลอกลิงก์ได้ กรุณาก๊อปปี้ด้วยตนเอง", "error");
             }
-            
-            // ลบ element จำลองทิ้ง
             document.body.removeChild(tempInput);
         }
 
-        // --- ฟังก์ชันแจ้งเตือน Toast ---
         let toastTimeout;
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toastMessage');
