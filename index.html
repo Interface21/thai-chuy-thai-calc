@@ -196,8 +196,8 @@
                 <button onclick="numpadPress('8')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">8</button>
                 <button onclick="numpadPress('9')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">9</button>
                 
-                <!-- แถวสุดท้าย -->
-                <button onclick="numpadClear()" class="btn-press py-4 bg-rose-50 rounded-2xl text-xl font-bold text-rose-500 shadow-sm border border-rose-100">C</button>
+                <!-- แถวสุดท้าย เปลี่ยนจาก C เป็นปุ่มจุดทศนิยม -->
+                <button onclick="numpadPress('.')" class="btn-press py-4 bg-white rounded-2xl text-3xl font-bold text-slate-700 shadow-sm border border-slate-200/50 mb-1 leading-none">.</button>
                 <button onclick="numpadPress('0')" class="btn-press py-4 bg-white rounded-2xl text-2xl font-bold text-slate-700 shadow-sm border border-slate-200/50">0</button>
                 <button onclick="numpadDelete()" class="btn-press py-4 bg-slate-200 rounded-2xl text-xl font-bold text-slate-600 shadow-sm border border-slate-300/50 flex justify-center items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
@@ -206,9 +206,12 @@
                 </button>
             </div>
 
-            <!-- ปุ่มยืนยัน -->
-            <div class="px-5 pb-8">
-                <button onclick="numpadConfirm()" class="btn-press w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg shadow-lg">
+            <!-- ปุ่มยืนยัน และ ปุ่มล้างค่า (จัดกลุ่มใหม่) -->
+            <div class="px-5 pb-8 flex gap-3">
+                <button onclick="numpadClear()" class="btn-press w-1/3 py-4 bg-rose-50 border border-rose-200 text-rose-500 rounded-2xl font-bold text-base shadow-sm">
+                    ล้าง (C)
+                </button>
+                <button onclick="numpadConfirm()" class="btn-press w-2/3 py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg shadow-md">
                     ตกลง (Enter)
                 </button>
             </div>
@@ -272,10 +275,14 @@
             return parseFloat(val.toString().replace(/,/g, '')) || 0;
         }
 
-        // เพิ่มฟังก์ชันฟอร์แมตตัวเลขให้มีลูกน้ำ (Comma)
+        // เพิ่มฟังก์ชันฟอร์แมตตัวเลขให้มีลูกน้ำ (Comma) และรองรับทศนิยม
         function formatNumber(num) {
             if (num === 0 || num === '' || isNaN(num)) return '';
-            return num.toLocaleString('th-TH', { maximumFractionDigits: 2 });
+            // ถ้ามีทศนิยม ให้แสดง 2 ตำแหน่ง เช่น 151.60
+            if (num % 1 !== 0) {
+                return num.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            return num.toLocaleString('th-TH');
         }
 
         function calculate(source) {
@@ -395,12 +402,26 @@
         }
 
         function numpadPress(num) {
-            if (currentNumpadValue === '0') {
-                currentNumpadValue = num;
+            if (num === '.') {
+                if (currentNumpadValue.includes('.')) return; // ป้องกันการพิมพ์จุดซ้ำ
+                if (currentNumpadValue === '' || currentNumpadValue === '0') {
+                    currentNumpadValue = '0.';
+                } else {
+                    currentNumpadValue += '.';
+                }
             } else {
-                // กันไม่ให้พิมพ์เลขยาวเกินไป (สูงสุด 6 หลัก)
-                if(currentNumpadValue.length < 6) {
-                    currentNumpadValue += num;
+                if (currentNumpadValue === '0') {
+                    currentNumpadValue = num;
+                } else {
+                    // จำกัดทศนิยมไม่เกิน 2 ตำแหน่ง
+                    if (currentNumpadValue.includes('.')) {
+                        let dec = currentNumpadValue.split('.')[1];
+                        if (dec && dec.length >= 2) return; 
+                    }
+                    // จำกัดความยาวทั้งหมดป้องกันเลขล้นจอ
+                    if(currentNumpadValue.length < 9) {
+                        currentNumpadValue += num;
+                    }
                 }
             }
             updateNumpadDisplay();
@@ -421,18 +442,25 @@
         }
 
         function updateNumpadDisplay() {
-            let num = parseInt(currentNumpadValue, 10);
-            document.getElementById('numpadDisplay').innerText = isNaN(num) ? '0' : num.toLocaleString('th-TH');
+            // แยกส่วนจำนวนเต็มและทศนิยมเพื่อแสดงผลให้ถูกต้อง
+            let parts = currentNumpadValue.split('.');
+            let intPart = parts[0];
+            let decPart = parts.length > 1 ? '.' + parts[1] : '';
+            
+            let intNum = parseInt(intPart, 10);
+            let formattedInt = isNaN(intNum) ? '0' : intNum.toLocaleString('th-TH');
+            
+            document.getElementById('numpadDisplay').innerText = formattedInt + decPart;
         }
 
         function numpadConfirm() {
             let el = document.getElementById(currentInputTarget);
-            let finalNum = parseInt(currentNumpadValue, 10);
+            let finalNum = parseFloat(currentNumpadValue);
             
             if(isNaN(finalNum) || finalNum === 0) {
                 el.value = '';
             } else {
-                el.value = finalNum.toLocaleString('th-TH');
+                el.value = formatNumber(finalNum);
             }
             
             closeNumpad();
